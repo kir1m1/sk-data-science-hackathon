@@ -12,7 +12,7 @@ import argparse
 import os
 import pickle
 import json
-
+from sklearn.model_selection import train_test_split
 
 def read_data(path):
     df = pd.read_csv(path,low_memory=False)
@@ -26,12 +26,22 @@ def load_model(model_path):
     
 def preprocessing(df):
     '''Write your code to preprocess the dataframe to generate your features to be passed to the model and return the preprocessed dataframe'''
+    df_processed = df
 
     return df_processed
     
 
 def inference(df_processed, model):
     '''Write your code to pass the preprocessed dataframe to your model and generate predictions from the model and return the predictions'''
+    lin_reg_model = LinearRegression()
+    y = df_processed['target'].values
+    feat_cols = df_processed.drop(['target', 'cat_feature_1', 'cat_feature_2', axis=1)
+    preds = dict()
+    
+    for col in feat_cols.columns:
+        x = feat_cols.loc[:, col].values.reshape(-1, 1)
+        lin_reg_model.fit(x, y)
+        preds[col] = lin_reg_model.predict(x)
 
     return preds
     
