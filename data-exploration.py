@@ -35,10 +35,11 @@ def category_with_highest_mean_cat_feature_2(df):
 
 
 def abs_std_dev_diff_btwn_groups_cat_feature_1(df):
-    '''Implement your code to return the absolute difference in standar deviation
+    '''Implement your code to return the absolute difference in standard deviation
     of the 'target' variable between the 2 groups present in 'cat_feature_1' '''
-    
-    return
+    high_std = df.groupby('cat_feature_1')['target'].std()['High']
+    low_std = df.groupby('cat_feature_1')['target'].std()['Low']
+    return np.abs(high_std, low_std)
 
 
 
