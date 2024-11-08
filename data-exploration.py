@@ -47,7 +47,7 @@ def min_feature_8_for_cat_feature_2(df):
     '''Implement your code to return the minimum value of 'feature_8'
     for the group Category_C in the variable 'cat_feature_2' '''
     
-    return
+    return df.groupby('cat_feature_2')['feature_8'].min()['Category_C']
 
 
 
@@ -55,7 +55,7 @@ def get_variance_feature_12_for_group(df):
     '''Implement your code to return the variance of 'feature_12' for the 
     group where 'cat_feature_2' is Category_A and 'cat_feature_1' is High'''
     
-    return
+    return 
 
 
 
