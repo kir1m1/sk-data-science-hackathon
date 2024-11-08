@@ -54,8 +54,8 @@ def min_feature_8_for_cat_feature_2(df):
 def get_variance_feature_12_for_group(df):
     '''Implement your code to return the variance of 'feature_12' for the 
     group where 'cat_feature_2' is Category_A and 'cat_feature_1' is High'''
-    
-    return 
+    variance_df = df.groupby(['cat_feature_1', 'cat_feature_2'])[['feature_12']].var()
+    return variance_df.loc[('High','Category_A'), 'feature_12']
 
 
 
