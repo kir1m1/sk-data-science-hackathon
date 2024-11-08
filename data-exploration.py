@@ -4,6 +4,7 @@ import json
 import argparse
 import os
 #Import any other necessary modules
+from sklearn.linear_model import Lasso
 
 
 def load_data(path):
@@ -14,8 +15,14 @@ def load_data(path):
 def get_highest_correlated_feature(df):
     '''Implement your code to return the feature
     having the highest correlation with the 'target' variable'''
+    col_names_to_drop = ["target", "cat_feature_1", "cat_feature_2"]
+    X = case_study.drop(col_names_to_drop, axis=1).values
+    y = case_study['target'].values
+    ft_col_names = case_study.drop(col_names_to_drop, axis=1).columns
+    coefficients = Lasso.fit(X,y).coef_
+    max_coef_idx = np.argmax(np.abs(coefficients))
     
-    return
+    return ft_col_names[max_coef_idx]
 
 
 
