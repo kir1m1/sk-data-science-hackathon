@@ -30,7 +30,7 @@ def category_with_highest_mean_cat_feature_2(df):
     '''Implement your code to return the category in 'cat_feature_2'
     variable which has the highest mean for the 'target' variable'''
     
-    return
+    return df.groupby('cat_feature_2')['target'].mean().idxmax()
 
 
 
