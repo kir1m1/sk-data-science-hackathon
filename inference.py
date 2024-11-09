@@ -26,7 +26,10 @@ def load_model(model_path):
     
 def preprocessing(df):
     '''Write your code to preprocess the dataframe to generate your features to be passed to the model and return the preprocessed dataframe'''
-    df_processed = df
+    df_processed = dict()
+    df_processed['x'] = df.drop(['target'], axis=1)
+    df_processed['y'] = df.['target']
+    X_train, X_test, y_train, y_test = train_test_split(x,y, test_size=0.2, random_state=42)
 
     return df_processed
     
@@ -35,7 +38,7 @@ def inference(df_processed, model):
     '''Write your code to pass the preprocessed dataframe to your model and generate predictions from the model and return the predictions'''
     lin_reg_model = LinearRegression()
     y = df_processed['target'].values
-    feat_cols = df_processed.drop(['target', 'cat_feature_1', 'cat_feature_2', axis=1)
+    feat_cols = df_processed.drop(['target', 'cat_feature_1', 'cat_feature_2'], axis=1)
     preds = dict()
     
     for col in feat_cols.columns:
