@@ -16,8 +16,8 @@ def get_highest_correlated_feature(df):
     '''Implement your code to return the feature
     having the highest correlation with the 'target' variable'''
     col_names_to_drop = ["target", "cat_feature_1", "cat_feature_2"]
-    X = df.drop(col_names_to_drop, axis=1).values
-    y = df['target'].values
+    X = df.drop(col_names_to_drop, axis=1)
+    y = df['target']
     ft_col_names = df.drop(col_names_to_drop, axis=1).columns
     correlation_model = Lasso(alpha=0.1)
     coefficients = correlation_model.fit(X,y).coef_
@@ -66,7 +66,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('--base_dir',type=str,default=cur_dir)
     parser.add_argument('--data_dir',type=str,default='')
-    parser.add_argument('--dataset',type=str,default='case_study_data.csv')
+    parser.add_argument('--dataset',type=str,default='case_study_validation_data.csv')
     parser.add_argument('--output_dir',type=str,default='output')
     parser.add_argument('--output_name',type=str,default="calculated_metrics.json")
     args = parser.parse_args()

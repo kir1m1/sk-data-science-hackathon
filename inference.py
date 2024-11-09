@@ -13,6 +13,9 @@ import os
 import pickle
 import json
 from sklearn.model_selection import train_test_split
+from sklearn.pipeline import Pipeline, make_pipeline
+from sklearn.preprocessing import OrdinalEncoder, OneHotEncoder, StandardScaler
+from sklearn.compose import ColumnTransformer
 
 def read_data(path):
     df = pd.read_csv(path,low_memory=False)
@@ -25,26 +28,63 @@ def load_model(model_path):
     
     
 def preprocessing(df):
-    '''Write your code to preprocess the dataframe to generate your features to be passed to the model and return the preprocessed dataframe'''
-    df_processed = dict()
-    df_processed['x'] = df.drop(['target'], axis=1)
-    df_processed['y'] = df.['target']
-    X_train, X_test, y_train, y_test = train_test_split(x,y, test_size=0.2, random_state=42)
+    '''Write your code to preprocess the dataframe to generate your features to be passed to the model and return the preprocessed dataframe'''   
+    x_features = df.drop(['target'], axis=1)
+    y_features = df['target']
+    
+    # split train 70% data & 30% test data
+    X_train, X_test, y_train, y_test = train_test_split(x_features, y_features, test_size=0.3, random_state=42)
 
+    unique_cat_feat_1_cols = x_features['cat_feature_1'].unique()
+    unique_cat_feat_2_cols = x_features['cat_feature_2'].unique()
+    scale_cols = [
+    'feature_1', 'feature_2', 'feature_3', 'feature_4', 'feature_5',
+    'feature_6', 'feature_7', 'feature_8', 'feature_9', 'feature_10',
+    'feature_11', 'feature_12', 'feature_13', 'feature_14', 'feature_15']
+    
+    # nominal_pipeline = Pipeline(steps = [
+    #     ('one_hot_encoder', OneHotEncoder(handle_unknown='ignore', sparse_output=False)),
+    # ])
+    cat_feat_1_pipeline = Pipeline(steps = [
+        ('cat-feat-1-encode', OrdinalEncoder(categories=[unique_cat_feat_1_cols])),
+    ])
+    cat_feat_2_pipeline = Pipeline(steps = [
+        ('cat-feat-2-encode', OrdinalEncoder(categories=[unique_cat_feat_2_cols])),
+    ])
+    col_transformer = ColumnTransformer(transformers = [
+            ('cat-feat-1-pipeline', cat_feat_1_pipeline, ['cat_feature_1']),
+            ('cat-feat-2-pipeline', cat_feat_2_pipeline, ['cat_feature_2']),
+            ('scale', StandardScaler(), scale_cols),
+        ],
+        remainder = 'drop',
+        n_jobs = -1
+    )
+
+    lin_reg = LinearRegression()
+    final_pipeline = make_pipeline(col_transformer, lin_reg)
+    final_pipeline.fit(X_train, y_train)
+
+    cat_feat_1_encode = OrdinalEncoder(categories=[unique_cat_feat_1_cols])
+    cat_feat_1_transform = cat_feat_1_encode.fit_transform(X_test[['cat_feature_1']])
+    
+    cat_feat_2_encode = OrdinalEncoder(categories=[unique_cat_feat_2_cols])
+    cat_feat_2_transform = cat_feat_2_encode.fit_transform(X_test[['cat_feature_2']])
+    
+    X_test[['cat_feature_1']] = cat_feat_1_transform
+    X_test[['cat_feature_2']] = cat_feat_2_transform
+    df_processed = pd.concat([X_test], axis=1)
+    df_processed['target'] = y_test
+    
+    print(df_processed.columns)
+    print(df_processed)
+    
     return df_processed
     
 
 def inference(df_processed, model):
     '''Write your code to pass the preprocessed dataframe to your model and generate predictions from the model and return the predictions'''
-    lin_reg_model = LinearRegression()
-    y = df_processed['target'].values
-    feat_cols = df_processed.drop(['target', 'cat_feature_1', 'cat_feature_2'], axis=1)
-    preds = dict()
     
-    for col in feat_cols.columns:
-        x = feat_cols.loc[:, col].values.reshape(-1, 1)
-        lin_reg_model.fit(x, y)
-        preds[col] = lin_reg_model.predict(x)
+    preds = model.predict(df_processed)
 
     return preds
     
@@ -94,4 +134,5 @@ if __name__ == '__main__':
     
     
 
+    
     
