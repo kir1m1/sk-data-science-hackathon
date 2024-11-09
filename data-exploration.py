@@ -19,7 +19,8 @@ def get_highest_correlated_feature(df):
     X = df.drop(col_names_to_drop, axis=1).values
     y = df['target'].values
     ft_col_names = df.drop(col_names_to_drop, axis=1).columns
-    coefficients = Lasso.fit(X,y).coef_
+    correlation_model = Lasso(alpha=0.1)
+    coefficients = correlation_model.fit(X,y).coef_
     max_coef_idx = np.argmax(np.abs(coefficients))
     
     return ft_col_names[max_coef_idx]
@@ -39,7 +40,7 @@ def abs_std_dev_diff_btwn_groups_cat_feature_1(df):
     of the 'target' variable between the 2 groups present in 'cat_feature_1' '''
     high_std = df.groupby('cat_feature_1')['target'].std()['High']
     low_std = df.groupby('cat_feature_1')['target'].std()['Low']
-    return np.abs(high_std, low_std)
+    return np.abs((high_std - low_std))
 
 
 
