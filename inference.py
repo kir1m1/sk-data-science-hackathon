@@ -16,6 +16,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline, make_pipeline
 from sklearn.preprocessing import OrdinalEncoder, OneHotEncoder, StandardScaler
 from sklearn.compose import ColumnTransformer
+from sklearn.impute import SimpleImputer
 
 def read_data(path):
     df = pd.read_csv(path,low_memory=False)
@@ -28,56 +29,62 @@ def load_model(model_path):
     
     
 def preprocessing(df):
-    '''Write your code to preprocess the dataframe to generate your features to be passed to the model and return the preprocessed dataframe'''   
+    '''Write your code to preprocess the dataframe to generate your features to be passed to the model and return the preprocessed dataframe''' 
+    # separate features and target
     x_features = df.drop(['target'], axis=1)
     y_features = df['target']
     
     # split train 70% data & 30% test data
     X_train, X_test, y_train, y_test = train_test_split(x_features, y_features, test_size=0.3, random_state=42)
 
-    unique_cat_feat_1_cols = x_features['cat_feature_1'].unique()
-    unique_cat_feat_2_cols = x_features['cat_feature_2'].unique()
+    # define categorical & continuous features
+    cat_cols = ['cat_feature_1', 'cat_feature_2']
     scale_cols = [
-    'feature_1', 'feature_2', 'feature_3', 'feature_4', 'feature_5',
-    'feature_6', 'feature_7', 'feature_8', 'feature_9', 'feature_10',
-    'feature_11', 'feature_12', 'feature_13', 'feature_14', 'feature_15']
-    
-    # nominal_pipeline = Pipeline(steps = [
-    #     ('one_hot_encoder', OneHotEncoder(handle_unknown='ignore', sparse_output=False)),
-    # ])
-    cat_feat_1_pipeline = Pipeline(steps = [
-        ('cat-feat-1-encode', OrdinalEncoder(categories=[unique_cat_feat_1_cols])),
+        'feature_1', 'feature_2', 'feature_3', 'feature_4', 'feature_5',
+        'feature_6', 'feature_7', 'feature_8', 'feature_9', 'feature_10',
+        'feature_11', 'feature_12', 'feature_13', 'feature_14', 'feature_15'
+    ]
+
+    # pipeline for categorical features
+    cat_feat_pipeline = Pipeline(steps = [
+        ('cat_encode', OrdinalEncoder(handle_unknown="use_encoded_value", unknown_value=-1)),
     ])
-    cat_feat_2_pipeline = Pipeline(steps = [
-        ('cat-feat-2-encode', OrdinalEncoder(categories=[unique_cat_feat_2_cols])),
+
+    # pipeline for continuous features
+    cont_feat_pipeline = Pipeline(steps = [
+        ('scale', StandardScaler()),
     ])
+
+    # column transformer
     col_transformer = ColumnTransformer(transformers = [
-            ('cat-feat-1-pipeline', cat_feat_1_pipeline, ['cat_feature_1']),
-            ('cat-feat-2-pipeline', cat_feat_2_pipeline, ['cat_feature_2']),
-            ('scale', StandardScaler(), scale_cols),
+            ('cat_encode', cat_feat_pipeline, cat_cols),
+            ('scale',      cont_feat_pipeline, scale_cols),
         ],
-        remainder = 'drop',
-        n_jobs = -1
+        remainder="drop",
+        n_jobs=-1,
+        verbose_feature_names_out=False
     )
 
-    lin_reg = LinearRegression()
-    final_pipeline = make_pipeline(col_transformer, lin_reg)
+    # setup final pipeline
+    final_pipeline = Pipeline(steps = [
+        ('preprocessor', col_transformer),
+        ('regressor', LinearRegression()),
+    ])
+
+    # fit training data
     final_pipeline.fit(X_train, y_train)
 
-    cat_feat_1_encode = OrdinalEncoder(categories=[unique_cat_feat_1_cols])
-    cat_feat_1_transform = cat_feat_1_encode.fit_transform(X_test[['cat_feature_1']])
-    
-    cat_feat_2_encode = OrdinalEncoder(categories=[unique_cat_feat_2_cols])
-    cat_feat_2_transform = cat_feat_2_encode.fit_transform(X_test[['cat_feature_2']])
-    
-    X_test[['cat_feature_1']] = cat_feat_1_transform
-    X_test[['cat_feature_2']] = cat_feat_2_transform
-    df_processed = pd.concat([X_test], axis=1)
-    df_processed['target'] = y_test
-    
+
+    # transform test dataset with the trained pipeline
+    X_test_transformed = final_pipeline.named_steps['preprocessor'].transform(X_test)
+    df_processed = pd.DataFrame(X_test_transformed, columns=col_transformer.get_feature_names_out())
+
+    # Add target variable back to the processed test data
+    df_processed['target'] = y_test.reset_index(drop=True)
+
     print(df_processed.columns)
     print(df_processed)
-    
+        
     return df_processed
     
 
