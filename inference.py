@@ -47,11 +47,14 @@ def preprocessing(df):
 
     # pipeline for categorical features
     cat_feat_pipeline = Pipeline(steps = [
-        ('cat_encode', OrdinalEncoder(handle_unknown="use_encoded_value", unknown_value=-1)),
+        ('impute', SimpleImputer(strategy='constant', fill_value='missing')),
+        # ('cat_encode', OrdinalEncoder(handle_unknown="use_encoded_value", unknown_value=-1)),
+        ('cat-encode', OneHotEncoder(handle_unknown='ignore', sparse_output=False)),
     ])
 
     # pipeline for continuous features
     cont_feat_pipeline = Pipeline(steps = [
+        ('impute', SimpleImputer(strategy='mean')),
         ('scale', StandardScaler()),
     ])
 
@@ -62,8 +65,7 @@ def preprocessing(df):
         ],
         remainder="drop",
         n_jobs=-1,
-        verbose_feature_names_out=False
-    )
+        verbose_feature_names_out=False)
 
     # setup final pipeline
     final_pipeline = Pipeline(steps = [
@@ -81,11 +83,41 @@ def preprocessing(df):
 
     # Add target variable back to the processed test data
     df_processed['target'] = y_test.reset_index(drop=True)
-
-    print(df_processed.columns)
-    print(df_processed)
         
     return df_processed
+
+def preprocezz(df_encoded):
+    # Read 1  the CSV file into a DataFrame
+    df = pd.read_csv('case_study_validation_data.csv')
+    
+    # Convert all column names to strings
+    df.columns = df.columns.astype(str)
+    
+    # Create a OneHotEncoder object
+    encoder = OneHotEncoder(handle_unknown='ignore', sparse_output=False)
+    
+    # Fit the encoder to the columns cat_feature_1 and cat_feature_2
+    encoder.fit(df[['cat_feature_1', 'cat_feature_2']])
+    
+    # Transform the columns cat_feature_1 and cat_feature_2
+    encoded_features = encoder.transform(df[['cat_feature_1', 'cat_feature_2']])
+    
+    # Get the feature names from the encoder
+    encoded_feature_names = encoder.get_feature_names_out(['cat_feature_1', 'cat_feature_2'])
+    
+    # Create a new DataFrame by concatenating the existing DataFrame with the encoded features
+    df_encoded = pd.concat([df, pd.DataFrame(encoded_features, columns=encoded_feature_names)], axis=1).drop(['cat_feature_1', 'cat_feature_2'], axis=1)
+    
+    # Split the data into training and testing sets
+    X = df_encoded.drop('target', axis=1)
+    y = df_encoded['target']
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    
+    # Create and fit a Linear Regression model
+    model = LinearRegression()
+    model.fit(X_train, y_train)
+
+    return df_encoded
     
 
 def inference(df_processed, model):
@@ -120,7 +152,8 @@ def main():
     df = read_data(dataset_path)
     model = load_model(model_path)
     
-    df_processed = preprocessing(df)
+    # df_processed = preprocessing(df)
+    df_processed = preprocezz(df)
     
     predictions = inference(df_processed[[col for col in df_processed.columns if col != 'target']], model)
     
